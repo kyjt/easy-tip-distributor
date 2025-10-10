@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Easy Tip Distributor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Jost", sans-serif;
+      }
+      .drop-zone {
+        border: 2px dashed #ccc;
+        border-radius: 8px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.3s, background-color 0.3s;
+      }
+      .drop-zone:hover {
+        border-color: #3b82f6;
+        background-color: #f9fafb;
+      }
+      .file-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem;
+        background-color: #f3f4f6;
+        border-radius: 4px;
+        margin-top: 0.5rem;
+      }
+      .remove-btn {
+        background: none;
+        border: none;
+        color: #ef4444;
+        font-weight: bold;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100">
+    <div class="container mx-auto p-8">
+      <header class="text-center mb-12">
+        <h1 class="text-5xl font-bold text-gray-800">Easy Tip Distributor</h1>
+        <p class="text-xl text-gray-500 mt-2">
+          Distribute employee tips the quick and easy way
+        </p>
+      </header>
+
+      <main>
+        <div
+          id="calculator-section"
+          class="bg-white p-8 rounded-xl shadow-lg max-w-4xl mx-auto"
+        >
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+              <h2 class="text-2xl font-semibold mb-2 text-gray-700">
+                Step 1: Upload Orders Report
+              </h2>
+              <p class="text-gray-500 mb-4">
+                Drag & drop your orders CSV file here, or click to select.
+              </p>
+              <div id="orders-drop-zone" class="drop-zone">
+                <p class="text-gray-400">Drop Orders CSV Here</p>
+                <input
+                  type="file"
+                  id="orders-file-input"
+                  class="hidden"
+                  accept=".csv"
+                />
+              </div>
+              <div id="orders-file-list" class="mt-4"></div>
+            </div>
+            <div>
+              <h2 class="text-2xl font-semibold mb-2 text-gray-700">
+                Step 2: Upload Timesheet
+              </h2>
+              <p class="text-gray-500 mb-4">
+                Drag & drop your employee timesheet CSV file here.
+              </p>
+              <div id="timesheet-drop-zone" class="drop-zone">
+                <p class="text-gray-400">Drop Timesheet CSV Here</p>
+                <input
+                  type="file"
+                  id="timesheet-file-input"
+                  class="hidden"
+                  accept=".csv"
+                />
+              </div>
+              <div id="timesheet-file-list" class="mt-4"></div>
+            </div>
+          </div>
+          <div class="mt-12 text-center">
+            <button
+              id="distribute-btn"
+              class="bg-blue-600 text-white font-bold py-4 px-8 rounded-lg text-xl hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled
+            >
+              Build Your Algorithm
+            </button>
+          </div>
+        </div>
+
+        <div
+          id="section-results-history"
+          class="max-w-4xl mx-auto mt-12 hidden"
+        >
+          <h2 class="text-3xl font-bold text-gray-700 mb-6">
+            Distribution History
+          </h2>
+          <div id="history-list-container" class="space-y-4"></div>
+        </div>
+      </main>
+    </div>
+
+    <div
+      id="mapping-modal"
+      class="fixed inset-0 z-10 overflow-y-auto bg-gray-500 bg-opacity-75 hidden"
+    >
+      <div
+        class="flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0"
+      >
+        <div
+          class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full"
+        >
+          <div>
+            <div id="section-field-map" class="p-8">
+              <h4 class="text-lg text-gray-700 font-semibold mb-2">
+                Step 1 of 2: Map Your Columns
+              </h4>
+              <p class="text-gray-500 mb-6">
+                Pair the "Required Fields" to the corresponding columns from
+                your files. This teaches the calculator which columns to look
+                at.
+              </p>
+              <div class="flex flex-col lg:flex-row gap-8">
+                <div
+                  id="orders_container"
+                  class="flex-1 border border-gray-200 rounded-lg p-4"
+                >
+                  <h5 class="text-md font-semibold text-gray-800 mb-4">
+                    Orders Report Fields
+                  </h5>
+                  <div class="grid grid-cols-2 gap-x-4 mb-2 pb-2 border-b">
+                    <p class="text-xs font-bold text-gray-500 uppercase">
+                      Mandatory Fields
+                    </p>
+                    <p class="text-xs font-bold text-gray-500 uppercase">
+                      Data from your files
+                    </p>
+                  </div>
+                  <div class="space-y-3">
+                    <div class="grid grid-cols-2 gap-x-4 items-center">
+                      <label
+                        for="map-order-id"
+                        class="text-sm font-medium text-gray-700"
+                        >Order ID</label
+                      ><select
+                        id="map-order-id"
+                        class="block w-full text-sm border-gray-300 rounded-md"
+                      ></select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-x-4 items-center">
+                      <label
+                        for="map-order-date"
+                        class="text-sm font-medium text-gray-700"
+                        >Date</label
+                      ><select
+                        id="map-order-date"
+                        class="block w-full text-sm border-gray-300 rounded-md"
+                      ></select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-x-4 items-center">
+                      <label
+                        for="map-order-time"
+                        class="text-sm font-medium text-gray-700"
+                        >Time</label
+                      ><select
+                        id="map-order-time"
+                        class="block w-full text-sm border-gray-300 rounded-md"
+                      ></select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-x-4 items-center">
+                      <label
+                        for="map-tip-amount"
+                        class="text-sm font-medium text-gray-700"
+                        >Tip Amount</label
+                      ><select
+                        id="map-tip-amount"
+                        class="block w-full text-sm border-gray-300 rounded-md"
+                      ></select>
+                    </div>
+                  </div>
+                </div>
+                <div
+                  id="employee-timesheet_container"
+                  class="flex-1 border border-gray-200 rounded-lg p-4"
+                >
+                  <h5 class="text-md font-semibold text-gray-800 mb-4">
+                    Timesheet Fields
+                  </h5>
+                  <div class="grid grid-cols-2 gap-x-4 mb-2 pb-2 border-b">
+                    <p class="text-xs font-bold text-gray-500 uppercase">
+                      Mandatory Fields
+                    </p>
+                    <p class="text-xs font-bold text-gray-500 uppercase">
+                      Data from your files
+                    </p>
+                  </div>
+                  <div class="space-y-3">
+                    <div class="grid grid-cols-2 gap-x-4 items-center">
+                      <label
+                        for="map-employee-name"
+                        class="text-sm font-medium text-gray-700"
+                        >Employee Name</label
+                      ><select
+                        id="map-employee-name"
+                        class="block w-full text-sm border-gray-300 rounded-md"
+                      ></select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-x-4 items-center">
+                      <label
+                        for="map-clock-in-date"
+                        class="text-sm font-medium text-gray-700"
+                        >Date</label
+                      ><select
+                        id="map-clock-in-date"
+                        class="block w-full text-sm border-gray-300 rounded-md"
+                      ></select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-x-4 items-center">
+                      <label
+                        for="map-clock-in-time"
+                        class="text-sm font-medium text-gray-700"
+                        >Clock In Time</label
+                      ><select
+                        id="map-clock-in-time"
+                        class="block w-full text-sm border-gray-300 rounded-md"
+                      ></select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-x-4 items-center">
+                      <label
+                        for="map-clock-out-time"
+                        class="text-sm font-medium text-gray-700"
+                        >Clock Out Time</label
+                      ><select
+                        id="map-clock-out-time"
+                        class="block w-full text-sm border-gray-300 rounded-md"
+                      ></select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <hr />
+            <div id="section-filters" class="p-8">
+              <div class="flex justify-between items-center">
+                <div>
+                  <h4 class="text-lg text-gray-700 font-semibold mb-2">
+                    Step 2 of 2: Add Filters (Optional)
+                  </h4>
+                  <p class="text-gray-500">
+                    Create rules to exclude certain tips from the calculation.
+                  </p>
+                </div>
+                <button
+                  id="reset-mappings-btn"
+                  type="button"
+                  class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                >
+                  Reset Saved Settings
+                </button>
+              </div>
+              <div id="filter-rules-container" class="mt-4 space-y-2"></div>
+              <button
+                id="add-filter-btn"
+                class="mt-4 text-sm font-semibold text-blue-600 hover:text-blue-800"
+              >
+                + Add Filter Rule
+              </button>
+            </div>
+          </div>
+          <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+            <button
+              id="process-button"
+              type="button"
+              class="inline-flex justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
+            >
+              Distribute Tips</button
+            ><button
+              id="cancel-modal-btn"
+              type="button"
+              class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      id="loading-modal"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-75 hidden"
+    >
+      <div class="flex flex-col items-center justify-center text-white">
+        <div
+          class="w-16 h-16 border-4 border-t-4 border-t-blue-500 border-gray-200 rounded-full animate-spin"
+        ></div>
+        <p class="mt-4 text-lg font-semibold">Distributing tips now...</p>
+      </div>
+    </div>
+    <div
+      id="results-modal"
+      class="fixed inset-0 z-50 overflow-y-auto bg-gray-900 bg-opacity-75 hidden"
+    >
+      <div
+        class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0"
+      >
+        <div
+          class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full"
+        >
+          <div
+            class="bg-gray-50 px-4 py-3 sm:px-6 flex justify-between items-center"
+          >
+            <h3 class="text-lg leading-6 font-medium text-gray-900">
+              Tip Distribution Results
+            </h3>
+            <button
+              id="close-results-modal-btn"
+              type="button"
+              class="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+            >
+              &times;
+            </button>
+          </div>
+          <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <div id="results-content-container">
+              <div id="summary-table-container" class="mb-6"></div>
+              <div id="details-container"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>
+<!-- <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-g" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Easy Tip Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+      .drop-zone {
+        border: 2px dashed #ccc;
+        border-radius: 8px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.3s, background-color 0.3s;
+      }
+      .drop-zone:hover {
+        border-color: #3b82f6;
+        background-color: #f9fafb;
+      }
+      .file-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem;
+        background-color: #f3f4f6;
+        border-radius: 4px;
+        margin-top: 0.5rem;
+      }
+      .remove-btn {
+        background: none;
+        border: none;
+        color: #ef4444;
+        font-weight: bold;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100">
+    <div class="container mx-auto p-8">
+      <header class="text-center mb-12">
+        <h1 class="text-5xl font-bold text-gray-800">EasyTipCalculator</h1>
+        <p class="text-xl text-gray-500 mt-2">
+          The easiest way to accurately distribute tips.
+        </p>
+      </header>
+
+      <main>
+        <div
+          id="calculator-section"
+          class="bg-white p-8 rounded-xl shadow-lg max-w-4xl mx-auto"
+        >
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+              <h2 class="text-2xl font-semibold mb-2 text-gray-700">
+                Step 1: Upload Orders Report
+              </h2>
+              <p class="text-gray-500 mb-4">
+                Drag & drop your orders CSV file here, or click to select.
+              </p>
+              <div id="orders-drop-zone" class="drop-zone">
+                <p class="text-gray-400">Drop Orders CSV Here</p>
+                <input
+                  type="file"
+                  id="orders-file-input"
+                  class="hidden"
+                  accept=".csv"
+                />
+              </div>
+              <div id="orders-file-list" class="mt-4"></div>
+            </div>
+            <div>
+              <h2 class="text-2xl font-semibold mb-2 text-gray-700">
+                Step 2: Upload Timesheet
+              </h2>
+              <p class="text-gray-500 mb-4">
+                Drag & drop your employee timesheet CSV file here.
+              </p>
+              <div id="timesheet-drop-zone" class="drop-zone">
+                <p class="text-gray-400">Drop Timesheet CSV Here</p>
+                <input
+                  type="file"
+                  id="timesheet-file-input"
+                  class="hidden"
+                  accept=".csv"
+                />
+              </div>
+              <div id="timesheet-file-list" class="mt-4"></div>
+            </div>
+          </div>
+          <div class="mt-12 text-center">
+            <button
+              id="distribute-btn"
+              class="bg-blue-600 text-white font-bold py-4 px-8 rounded-lg text-xl hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled
+            >
+              Build Your Algorithm
+            </button>
+          </div>
+        </div>
+
+        <div
+          id="section-results-history"
+          class="max-w-4xl mx-auto mt-12 hidden"
+        >
+          <h2 class="text-3xl font-bold text-gray-700 mb-6">
+            Calculation History
+          </h2>
+          <div id="history-list-container" class="space-y-4"></div>
+        </div>
+      </main>
+    </div>
+
+    <div
+      id="mapping-modal"
+      class="fixed inset-0 z-10 overflow-y-auto bg-gray-500 bg-opacity-75 hidden"
+    >
+      <div
+        class="flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0"
+      >
+        <div
+          class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full"
+        >
+          <div>
+            <div id="section-field-map" class="p-8">
+              <h4 class="text-lg text-gray-700 font-semibold mb-2">
+                Step 1 of 2: Map Your Columns
+              </h4>
+              <p class="text-gray-500 mb-6">
+                Pair the "Required Fields" to the corresponding columns from
+                your files. This teaches the calculator which columns to look
+                at.
+              </p>
+              <div class="flex flex-col lg:flex-row gap-8">
+                <div
+                  id="orders_container"
+                  class="flex-1 border border-gray-200 rounded-lg p-4"
+                >
+                  <h5 class="text-md font-semibold text-gray-800 mb-4">
+                    Orders Report Fields
+                  </h5>
+                  <div class="grid grid-cols-2 gap-x-4 mb-2 pb-2 border-b">
+                    <p class="text-xs font-bold text-gray-500 uppercase">
+                      Mandatory Fields
+                    </p>
+                    <p class="text-xs font-bold text-gray-500 uppercase">
+                      Data from your files
+                    </p>
+                  </div>
+                  <div class="space-y-3">
+                    <div class="grid grid-cols-2 gap-x-4 items-center">
+                      <label
+                        for="map-order-id"
+                        class="text-sm font-medium text-gray-700"
+                        >Order ID</label
+                      ><select
+                        id="map-order-id"
+                        class="block w-full text-sm border-gray-300 rounded-md"
+                      ></select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-x-4 items-center">
+                      <label
+                        for="map-order-date"
+                        class="text-sm font-medium text-gray-700"
+                        >Date</label
+                      ><select
+                        id="map-order-date"
+                        class="block w-full text-sm border-gray-300 rounded-md"
+                      ></select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-x-4 items-center">
+                      <label
+                        for="map-order-time"
+                        class="text-sm font-medium text-gray-700"
+                        >Time</label
+                      ><select
+                        id="map-order-time"
+                        class="block w-full text-sm border-gray-300 rounded-md"
+                      ></select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-x-4 items-center">
+                      <label
+                        for="map-tip-amount"
+                        class="text-sm font-medium text-gray-700"
+                        >Tip Amount</label
+                      ><select
+                        id="map-tip-amount"
+                        class="block w-full text-sm border-gray-300 rounded-md"
+                      ></select>
+                    </div>
+                  </div>
+                </div>
+                <div
+                  id="employee-timesheet_container"
+                  class="flex-1 border border-gray-200 rounded-lg p-4"
+                >
+                  <h5 class="text-md font-semibold text-gray-800 mb-4">
+                    Timesheet Fields
+                  </h5>
+                  <div class="grid grid-cols-2 gap-x-4 mb-2 pb-2 border-b">
+                    <p class="text-xs font-bold text-gray-500 uppercase">
+                      Mandatory Fields
+                    </p>
+                    <p class="text-xs font-bold text-gray-500 uppercase">
+                      Data from your files
+                    </p>
+                  </div>
+                  <div class="space-y-3">
+                    <div class="grid grid-cols-2 gap-x-4 items-center">
+                      <label
+                        for="map-employee-name"
+                        class="text-sm font-medium text-gray-700"
+                        >Employee Name</label
+                      ><select
+                        id="map-employee-name"
+                        class="block w-full text-sm border-gray-300 rounded-md"
+                      ></select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-x-4 items-center">
+                      <label
+                        for="map-clock-in-date"
+                        class="text-sm font-medium text-gray-700"
+                        >Date</label
+                      ><select
+                        id="map-clock-in-date"
+                        class="block w-full text-sm border-gray-300 rounded-md"
+                      ></select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-x-4 items-center">
+                      <label
+                        for="map-clock-in-time"
+                        class="text-sm font-medium text-gray-700"
+                        >Clock In Time</label
+                      ><select
+                        id="map-clock-in-time"
+                        class="block w-full text-sm border-gray-300 rounded-md"
+                      ></select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-x-4 items-center">
+                      <label
+                        for="map-clock-out-time"
+                        class="text-sm font-medium text-gray-700"
+                        >Clock Out Time</label
+                      ><select
+                        id="map-clock-out-time"
+                        class="block w-full text-sm border-gray-300 rounded-md"
+                      ></select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <hr />
+            <div id="section-filters" class="p-8">
+              <div class="flex justify-between items-center">
+                <div>
+                  <h4 class="text-lg text-gray-700 font-semibold mb-2">
+                    Step 2 of 2: Add Filters (Optional)
+                  </h4>
+                  <p class="text-gray-500">
+                    Create rules to exclude certain tips from the calculation.
+                  </p>
+                </div>
+                <button
+                  id="reset-mappings-btn"
+                  type="button"
+                  class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                >
+                  Reset Saved Settings
+                </button>
+              </div>
+              <div id="filter-rules-container" class="mt-4 space-y-2"></div>
+              <button
+                id="add-filter-btn"
+                class="mt-4 text-sm font-semibold text-blue-600 hover:text-blue-800"
+              >
+                + Add Filter Rule
+              </button>
+            </div>
+          </div>
+          <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+            <button
+              id="process-button"
+              type="button"
+              class="inline-flex justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
+            >
+              Distribute Tips</button
+            ><button
+              id="cancel-modal-btn"
+              type="button"
+              class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      id="loading-modal"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-75 hidden"
+    >
+      <div class="flex flex-col items-center justify-center text-white">
+        <div
+          class="w-16 h-16 border-4 border-t-4 border-t-blue-500 border-gray-200 rounded-full animate-spin"
+        ></div>
+        <p class="mt-4 text-lg font-semibold">Distributing tips now...</p>
+      </div>
+    </div>
+    <div
+      id="results-modal"
+      class="fixed inset-0 z-50 overflow-y-auto bg-gray-900 bg-opacity-75 hidden"
+    >
+      <div
+        class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0"
+      >
+        <div
+          class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full"
+        >
+          <div
+            class="bg-gray-50 px-4 py-3 sm:px-6 flex justify-between items-center"
+          >
+            <h3 class="text-lg leading-6 font-medium text-gray-900">
+              Tip Distribution Results
+            </h3>
+            <button
+              id="close-results-modal-btn"
+              type="button"
+              class="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+            >
+              &times;
+            </button>
+          </div>
+          <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <div id="results-content-container">
+              <div id="summary-table-container" class="mb-6"></div>
+              <div id="details-container"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html> -->

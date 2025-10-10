@@ -1,0 +1,12 @@
+node_modules/
+/server/.env
+sample-data/
+
+# Dependencies
+/node_modules
+
+# Environment variables
+.env
+
+# Vercel
+.vercel

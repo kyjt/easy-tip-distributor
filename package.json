@@ -1,0 +1,23 @@
+{
+  "name": "Easy Tip Distributor",
+  "version": "1.0.0",
+  "description": "Easily and accurately calculate and distribute tips.",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node api/index.js",
+    "dev": "nodemon api/index.js"
+  },
+  "author": "kyjt",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "date-fns": "^3.6.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "multer": "^2.0.2",
+    "papaparse": "^5.4.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
