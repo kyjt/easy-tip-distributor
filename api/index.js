@@ -4,7 +4,7 @@ const cors = require("cors");
 const Papa = require("papaparse");
 require("dotenv").config();
 
-const { calculateTipDistribution } = require("./tip-distributor.js");
+const { calculateTipDistribution } = require("../tip-distributor.js");
 
 const app = express();
 const port = process.env.PORT || 3000;
