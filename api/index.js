@@ -4,7 +4,7 @@ const cors = require("cors");
 const Papa = require("papaparse");
 require("dotenv").config();
 
-const { calculateTipDistribution } = require("../tip-distributor.js");
+const { calculateTipDistribution } = require("./tip-distributor.js");
 
 const app = express();
 app.use(cors());
@@ -43,9 +43,7 @@ app.post("/api/process", upload, async (req, res) => {
       skipEmptyLines: true,
     }).data;
 
-    // --- NEW: Data Cleaning Step ---
-    // We filter out any row that doesn't have a value in the columns we need for calculation.
-    // This removes blank rows or garbage rows from the CSV.
+    // --- Data Cleaning Step ---
     const requiredOrderCols = [mappings.orders.tipAmount, mappings.orders.date];
     const requiredTimesheetCols = [
       mappings.timesheet.employeeName,
