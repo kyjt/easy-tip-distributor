@@ -1,4 +1,3 @@
-const path = require("path");
 const express = require("express");
 const multer = require("multer");
 const cors = require("cors");
@@ -8,8 +7,6 @@ require("dotenv").config();
 const { calculateTipDistribution } = require("../tip-distributor.js");
 
 const app = express();
-const port = process.env.PORT || 3000;
-app.use(express.static(path.join(__dirname, "../public")));
 app.use(cors());
 app.use(express.json());
 
@@ -90,6 +87,4 @@ app.post("/api/process", upload, async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server listening at http://localhost:${port}`);
-});
+module.exports = app;

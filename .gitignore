@@ -10,3 +10,5 @@ sample-data/
 
 # Vercel
 .vercel
+
+.DS_Store
